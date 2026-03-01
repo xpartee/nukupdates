@@ -683,7 +683,7 @@
             <div style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); text-align: center;">
                 <div style="font-size: 40px; margin-bottom: 10px;">📝</div>
                 <h3 style="margin: 10px 0;">Academic Library</h3>
-                <p style="color: #666; font-size: 14px;">Programming Methodology</p>
+                <p style="color: #666; font-size: 14px;">Course Files</p>
                 ​<button onclick="showCategories()" style="display: inline-block; margin-top: 15px; padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 5px; font-weight: bold; cursor: pointer;">Enter Library</button>
             </div>
 
@@ -848,7 +848,65 @@
     }
   }
 
-  // This function makes sure the Back button works
+async function loadLibrary(selectedCategory) {
+    const display = document.getElementById('library-display');
+    if (!display) return; // Safety check
+    
+    display.innerHTML = "<p style='text-align:center;'>Fetching resources...</p>";
+
+    try {
+        const snapshot = await db.collection("resources")
+            .where("category", "==", selectedCategory)
+            .get();
+
+        display.innerHTML = ""; 
+
+        if (snapshot.empty) {
+            display.innerHTML = "<p style='text-align:center;'>No files uploaded for " + selectedCategory + " yet.</p>";
+            return;
+        }
+
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            display.innerHTML += `
+                <div class="card" style="margin-bottom: 15px; padding: 15px;">
+                    <h3>${data.title}</h3>
+                    <p>Level: ${data.level}</p>
+                    <a href="${data.url}" target="_blank" class="tab-btn active" style="text-decoration:none; display:inline-block; margin-top:10px;">View / Download</a>
+                </div>
+            `;
+        });
+    } catch (error) {
+        console.error("Library Error:", error);
+        display.innerHTML = "<p>Error loading library. Please refresh.</p>";
+    }
+}
+
+  function showCategories() {
+    const container = document.getElementById('course-selection');
+    if (!container) return;
+
+    // This creates the Undergraduate and MBBS buttons for the student
+    container.innerHTML = `
+        <div style="display:flex; gap:10px; justify-content:center; margin-bottom:20px; padding:10px;">
+            <button class="tab-btn" onclick="loadLibrary('Undergraduate')" style="padding:10px 20px; cursor:pointer;">Undergraduate</button>
+            <button class="tab-btn" onclick="loadLibrary('MBBS')" style="padding:10px 20px; cursor:pointer;">MBBS</button>
+        </div>
+        
+        <div id="library-display" class="cards-grid">
+            <p style="text-align:center; color:gray;">Select a category to view Northwest University resources.</p>
+        </div>
+        
+        <button onclick="hideSelection()" style="display:block; margin:20px auto; padding:8px 15px; background:#666; color:white; border:none; border-radius:5px; cursor:pointer;">Back</button>
+    `;
+
+    container.style.display = 'block';
+    
+    // Hide the main updates section so the library is clear
+    const downloadsSection = document.getElementById('downloads');
+    if (downloadsSection) downloadsSection.style.display = 'none';
+}
+
   function hideSelection() {
     document.getElementById('downloads').style.display = 'block';
     document.getElementById('course-selection').style.display = 'none';
